@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from pyrsistent import field, PClass, plist, pset_field, pset
+from pyrsistent import field, PClass, pvector, pvector_field, pset, pset_field
 
 from player_actions import (
     ActionForcedBet,
@@ -47,7 +47,7 @@ class GameState(PClass):
     street = field(type=Street, initial=Street.PREFLOP)
     board = pset_field(item_type=Card, optional=True)
     action = field(type=Action, initial=Action.NOACTION)
-    players = pset_field(item_type=PlayerState)
+    players = pvector_field(item_type=PlayerState)
     pot = field(type=int, initial=0)
 
 
@@ -70,10 +70,11 @@ class PokerGame():
         ret += f"\t\tboard: {self.state.board}\n"
         ret += f"\t\tpot: {self.state.pot}\n"
         ret += f"\t\taction: {self.state.action}\n"
-        ret += "\tPlayers:"
+        ret += f"\t\thistory: {len(self._history)}\n"
+        ret += "\tPlayers:\n"
         if len(self.state.players):
             for player in self.state.players:
-                ret += f"\t\tPID: {player.pid} (Playing:{player.playing})\n"
+                ret += f"\t\tPID: '{player.pid}' (Playing:{player.playing})\n"
                 ret += f"\t\t\tstack: {str(player.stack)}\n"
                 ret += f"\t\t\tactive_bet: {player.active_bet}\n"
         else:
@@ -115,11 +116,11 @@ class PokerGame():
                 {"server:player_name": stack_val}
 
         """
-        players = pset()
+        players = pvector()
         for pos, player_info in enumerate(players_info):
             player = pm.get_player(player_info['pid'])
             #here we should alos set the stats
-            players = players.add(
+            players = players.append(
                 PlayerState(
                     pid=player_info['pid'],
                     stack=player_info['stack'],
@@ -159,9 +160,7 @@ if __name__ == "__main__":
         {'pid': 'ps:p4', 'stack': 1004},
         {'pid': 'ps:p5', 'stack': 1005},
     ]
-    print(game)
     game.add_players(players)
-    print(game)
     flop = [
         Card(rank=2, suit=2),
         Card(rank=14, suit=3),
