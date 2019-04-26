@@ -130,9 +130,32 @@ class PokerGame():
 
         self._update_state({"board": None, "street": Street.PREFLOP, "players": players})
 
-    def do_forced_bet(self, player):
-        self.players[player] += self.ante
-        player.bet(self.ante)
+    def do_bet(self, pid, bet, action):
+        players = self.state.players
+        pot = self.state.pot + bet
+        for i, player in enumerate(players):
+            if player.pid == pid:
+                player.active_bet += bet
+                player.stack -= bet
+                players = players.set(i, player)
+                break
+        self._update_state({"players": players, "pot": pot, "action": action})
+
+    def do_forced_bet(self, bet):
+        players = self.state.players
+        pot = self.state.pot
+        for i in range(len(players)):
+            player = players[i]
+            if player.stack > bet:
+                player.active_bet = bet
+                pot += bet
+                player.stack -= bet
+            else:
+                player.active_bet = player.stack
+                pot += player.stack
+                player.stack = 0
+            players = players.set(i, player)
+        self._update_state({"players": players, "pot": pot, "action": Action.ANTE})
 
     def do_deal_a_card(self, card):
         self.board.append(card)
@@ -160,14 +183,21 @@ if __name__ == "__main__":
         {'pid': 'ps:p4', 'stack': 1004},
         {'pid': 'ps:p5', 'stack': 1005},
     ]
+    # PREFLOP
     game.add_players(players)
-    flop = [
-        Card(rank=2, suit=2),
-        Card(rank=14, suit=3),
-        Card(rank=10, suit=2),
-    ]
-    game.deal_flop(flop)
+    game.do_forced_bet(10)
     print(game)
+    game.do_bet('ps:p1', 100, Action.RAISE)
+    print(game)
+
+    # FLOP
+    #flop = [
+    #    Card(rank=2, suit=2),
+    #    Card(rank=14, suit=3),
+    #    Card(rank=10, suit=2),
+    #]
+    #game.deal_flop(flop)
+    #print(game)
 
     pass
 
