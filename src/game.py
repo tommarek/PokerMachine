@@ -2,7 +2,7 @@
 
 from pyrsistent import field, PClass, pvector, pvector_field, pset, pset_field
 
-from player_actions import (
+from actions import (
     ActionAnte,
     ActionSmallBlind,
     ActionBigBlind,
