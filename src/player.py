@@ -1,8 +1,13 @@
 #!/usr/bin/python3
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
-class Player():
+PLAYER_STATS = ['vpip', 'pfr']
+
+Base = declarative_base()
+
+class Player(Base):
     __tablename__ = "player"
     pid = Column(String, primary_key=True)
 

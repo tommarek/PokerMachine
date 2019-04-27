@@ -1,54 +1,54 @@
 #!/usr/bin/python
 
-from const import Action
-
 class PokerAction():
-    def __init__(self):
-        pass
+    def __str__(self):
+        args = {k:getattr(self, k) for k in self.__slots__}
+        ret = f"{self.__class__.__name__} {args}"
+        return ret
 
 class NoAction(PokerAction):
-    action = Action.NOACTION
+    __slots__ = []
 
 class ActionDealFlop(PokerAction):
-    action = Action.DEALFLOP
+    __slots__ = ['cards']
     def __init__(self, cards):
         self.cards = cards
 
 class ActionAnte(PokerAction):
-    action = Action.ANTE
+    __slots__ = ['bet']
     def __init__(self, bet):
         self.bet = bet
 
 class ActionSmallBlind(PokerAction):
-    action = Action.SMALL_BLIND
+    __slots__ = ['pid', 'bet']
     def __init__(self, pid, bet):
         self.bet = bet
         self.pid = pid
 
 class ActionBigBlind(PokerAction):
-    action = Action.BIG_BLIND
+    __slots__ = ['pid', 'bet']
     def __init__(self, pid, bet):
         self.bet = bet
         self.pid = pid
 
 class ActionFold(PokerAction):
-    action = Action.FOLD
+    __slots__ = ['pid']
     def __init__(self, pid):
         self.pid = pid
 
 class ActionCheck(PokerAction):
-    action = Action.CHECK
+    __slots__ = ['pid']
     def __init__(self, pid):
         self.pid = pid
 
 class ActionCall(PokerAction):
-    action = Action.CALL
+    __slots__ = ['pid', 'bet']
     def __init__(self, pid, bet):
         self.pid = pid
         self.bet = bet
 
 class ActionRaise(PokerAction):
-    action = Action.RAISE
+    __slots__ = ['pid', 'bet']
     def __init__(self, pid, bet):
         self.pid = pid
         self.bet = bet

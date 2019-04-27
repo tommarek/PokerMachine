@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 
 from db.sqlalchemy_declarative import Base, Player
 
-class PlayerNotFound(Exception): pass
+class DBConnectionError(Exception): pass
+class PlayerAlreadyExists(Exception): pass
 
 class PlayerManager():
     _session = None
@@ -17,7 +18,7 @@ class PlayerManager():
             DBSession = sessionmaker(bind=engine)
             self._session = DBSession()
         except Exception as e:
-            raise
+            raise DBConnectionError()
 
     @contextmanager
     def session_scope(self):
@@ -28,15 +29,18 @@ class PlayerManager():
             self._session.rollback()
             raise
 
-    def add_new_player(self, pid):
+    def add_player(self, pid):
         with self.session_scope() as session:
             p = session.query(Player).filter(Player.pid == pid).first()
             if not p:
                 p = Player(pid=pid)
                 session.add(p)
-            return p
+            else:
+                raise PlayerAlreadyExists()
 
-    get_player = add_new_player
+    def get_player(self, pid):
+        with self.session_scope() as session:
+            return session.query(Player).filter(Player.pid == pid).first()
 
     def update_stats(self, pid, stats):
         with self.session_scope() as session:

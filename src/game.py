@@ -15,7 +15,7 @@ from player_actions import (
     PokerAction,
 )
 from card import Card
-from const import Action, Street, PLAYER_STATS
+from const import Street
 from player import Player
 from player_manager import PlayerManager
 
@@ -28,6 +28,13 @@ class PlayerState():
         self.cards = None
         self.active_bet = None
         self.stats = self.load_stats(player)
+
+    def __str__(self):
+        ret = f"PID: '{self.pid}' (Playing:{self.playing}) "
+        ret += f"stack: {str(self.stack)} "
+        ret += f"active_bet: {self.active_bet}"
+        ret += "\n"
+        return ret
 
     @property
     def is_all_in(self):
@@ -52,6 +59,13 @@ class GameState(PClass):
     players = pvector_field(item_type=PlayerState)
     pot = field(type=int, initial=0)
 
+    def __str__(self):
+        ret = "GameState:\n"
+    deck = pset_field(        ret += f"  Street: {self.street}\n"
+        ret += f"  board: {self.board}\n"
+        ret += f"  pot: {self.pot}\n"
+        ret += f"  action: {self.action}\n"
+        return ret
 
 
 class PokerGame():
@@ -66,21 +80,13 @@ class PokerGame():
         self.player_manager = player_manager
 
     def __str__(self):
-        ret = "PokerGame:\n"
-        ret += "\tGameState:\n"
-        ret += f"\t\tstreet: {self.state.street}\n"
-        ret += f"\t\tboard: {self.state.board}\n"
-        ret += f"\t\tpot: {self.state.pot}\n"
-        ret += f"\t\taction: {self.state.action}\n"
-        ret += f"\t\thistory: {len(self._history)}\n"
-        ret += "\tPlayers:\n"
+        ret = self.state.__str__()
+        ret += f"  history: {len(self._history)}\n"
         if len(self.state.players):
             for player in self.state.players:
-                ret += f"\t\tPID: '{player.pid}' (Playing:{player.playing})\n"
-                ret += f"\t\t\tstack: {str(player.stack)}\n"
-                ret += f"\t\t\tactive_bet: {player.active_bet}\n"
+                ret += player.__str__()
         else:
-            ret += "\t\tNo players"
+            ret += "  No players"
 
         return ret
 

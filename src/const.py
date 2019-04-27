@@ -8,17 +8,6 @@ class Suits(Enum):
     HEART = 3
     SPADE = 4
 
-class Action(Enum):
-    ANTE = 0
-    SMALL_BLIND = 1
-    BIG_BLIND = 2
-    FOLD = 3
-    CALL = 4
-    CHECK = 5
-    RAISE = 6
-    DEALFLOP = 7
-    NOACTION = 8
-
 class Street(Enum):
     PREFLOP = 0
     FLOP = 1
@@ -27,8 +16,4 @@ class Street(Enum):
     SHOWDOWN = 4
     ENDED = 5
 
-rank_map = {2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"T", 11:"J", 12:"Q", 13:"K", 14:"A"}
-suit_map = {1:"C", 2:"D", 3:"H", 4:"S"}
-
-PLAYER_STATS = ["pfr, vpip"]
 
