@@ -14,9 +14,10 @@ class Action(Enum):
     BIG_BLIND = 2
     FOLD = 3
     CALL = 4
-    RAISE = 5
-    SIT_OUT = 6
-    NOACTION = 7
+    CHECK = 5
+    RAISE = 6
+    DEALFLOP = 7
+    NOACTION = 8
 
 class Street(Enum):
     PREFLOP = 0

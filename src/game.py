@@ -3,13 +3,15 @@
 from pyrsistent import field, PClass, pvector, pvector_field, pset, pset_field
 
 from player_actions import (
-    ActionForcedBet,
+    ActionAnte,
     ActionSmallBlind,
     ActionBigBlind,
     ActionFold,
     ActionCall,
+    ActionCheck,
     ActionRaise,
-    ActionSitOut,
+    ActionDealFlop,
+    NoAction,
     PokerAction,
 )
 from card import Card
@@ -46,7 +48,7 @@ class PlayerState():
 class GameState(PClass):
     street = field(type=Street, initial=Street.PREFLOP)
     board = pset_field(item_type=Card, optional=True)
-    action = field(type=Action, initial=Action.NOACTION)
+    action = field(type=PokerAction, initial=NoAction)
     players = pvector_field(item_type=PlayerState)
     pot = field(type=int, initial=0)
 
@@ -98,14 +100,10 @@ class PokerGame():
             new_state = new_state.set(key, val)
         self.state = new_state
 
-    def deal_flop(self, cards):
-        self._update_state({"board": pset(cards), "street": Street.FLOP})
-
-    def deal_card(self, card):
-        new_board = self.state.board.add(card)
-        new_street = self.state.street + 1
-        self._update_state({"board": new_board, "street": new_street})
-
+    def is_street_finished(self):
+        ret = True
+        #if self.status.action in (Action.CALL, Actson.FOLD) or 
+        #for player in self.state.players:
 
     def add_players(self, players_info):
         """
@@ -128,20 +126,27 @@ class PokerGame():
                 )
             )
 
-        self._update_state({"board": None, "street": Street.PREFLOP, "players": players})
+        self._update_state({
+            "board": None,
+            "street": Street.PREFLOP,
+            "players": players,
+            "action": NoAction()
+        })
 
-    def do_bet(self, pid, bet, action):
+    def _do_bet(self, action):
+        pid, bet = action.pid, action.bet
         players = self.state.players
         pot = self.state.pot + bet
         for i, player in enumerate(players):
-            if player.pid == pid:
+            if player.pid == action.pid:
                 player.active_bet += bet
                 player.stack -= bet
                 players = players.set(i, player)
                 break
         self._update_state({"players": players, "pot": pot, "action": action})
 
-    def do_forced_bet(self, bet):
+    def _do_forced_bet(self, action):
+        bet = action.bet
         players = self.state.players
         pot = self.state.pot
         for i in range(len(players)):
@@ -155,22 +160,51 @@ class PokerGame():
                 pot += player.stack
                 player.stack = 0
             players = players.set(i, player)
-        self._update_state({"players": players, "pot": pot, "action": Action.ANTE})
+        self._update_state({"players": players, "pot": pot, "action": action})
 
-    def do_deal_a_card(self, card):
-        self.board.append(card)
 
-    def do_player_bet(self, player, amount):
-        self.players[player] += self.ante
+    def _do_deal_flop(self, action):
+        self._update_state({"board": pset(action.cards), "street": Street.FLOP, "action": action})
 
-    def do_player_check(self, player):
+    def do_deal_card(self, action):
+        import ipdb; ipdb.set_trace()
+
+        street = self.state.street
+        new_board = self.state.board.add(action.card)
+
+        self._update_state({"board": new_board, "action": action})
+
+
+    def _do_check(self, player):
         pass
 
-    def do_player_fold(self, player):
-        pass
+    def _do_fold(self, pid):
+        players = self.state.players
+        for i, player in enumerate(players):
+            if player.pid == pid:
+                player.playing = False
+                players = players.set(i, player)
+                break
+        self._update_state({"players": players, "action": ActionFold(pid)})
+
 
     def add_incident(self, action):
         pass
+
+    def do_action(self, action):
+        if isinstance(action, ActionAnte):
+            self._do_forced_bet(action)
+        elif isinstance(action, (ActionSmallBlind, ActionBigBlind, ActionCall, ActionRaise)):
+            self._do_bet(action)
+        elif isinstance(action, ActionFold):
+            self._do_fold(action)
+        elif isinstance(action, ActionCheck):
+            self._do_check(action)
+        elif isinstance(action, ActionDealFlop):
+            self._do_deal_flop(action)
+        else:
+            #unknwonw anction
+            print("unknown action")
 
 
 if __name__ == "__main__":
@@ -185,20 +219,25 @@ if __name__ == "__main__":
     ]
     # PREFLOP
     game.add_players(players)
-    game.do_forced_bet(10)
-    print(game)
-    game.do_bet('ps:p1', 100, Action.RAISE)
-    print(game)
+    game.do_action(ActionAnte(10))
+    game.do_action(ActionSmallBlind('ps:p1', 100))
+    game.do_action(ActionBigBlind('ps:p2', 200))
+    game.do_action(ActionFold('ps:p3'))
+    game.do_action(ActionFold('ps:p4'))
+    game.do_action(ActionCall('ps:p5', 200))
+    game.do_action(ActionRaise('ps:p1', 300))
+    game.do_action(ActionCall('ps:p2', 200))
+    game.do_action(ActionCall('ps:p5', 200))
 
     # FLOP
-    #flop = [
-    #    Card(rank=2, suit=2),
-    #    Card(rank=14, suit=3),
-    #    Card(rank=10, suit=2),
-    #]
-    #game.deal_flop(flop)
-    #print(game)
+    flop = [
+        Card(rank=2, suit=2),
+        Card(rank=14, suit=3),
+        Card(rank=10, suit=2),
+    ]
+    game.do_action(ActionDealFlop(flop))
 
+    print(game)
     pass
 
 
