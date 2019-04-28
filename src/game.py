@@ -18,6 +18,7 @@ from card import Card
 from const import Street
 from player import Player
 from player_manager import PlayerManager
+from poker_tools import PokerTools
 
 class PlayerState():
     def __init__(self, pid, stack, position=None, player=None):
@@ -58,15 +59,17 @@ class GameState(PClass):
     action = field(type=PokerAction, initial=NoAction)
     players = pvector_field(item_type=PlayerState)
     pot = field(type=int, initial=0)
+    deck = pset_field(item_type=Card, initial=PokerTools.gen_deck())
+    revealed_cards = pset_field(item_type=Card, initial=pset([]))
 
     def __str__(self):
         ret = "GameState:\n"
-    deck = pset_field(        ret += f"  Street: {self.street}\n"
+        ret += f"  Street: {self.street}\n"
         ret += f"  board: {self.board}\n"
         ret += f"  pot: {self.pot}\n"
+        ret += f"  deck: {len(self.revealed_cards)}/{len(self.deck)}\n"
         ret += f"  action: {self.action}\n"
         return ret
-
 
 class PokerGame():
     """
@@ -194,9 +197,6 @@ class PokerGame():
         self._update_state({"players": players, "action": ActionFold(pid)})
 
 
-    def add_incident(self, action):
-        pass
-
     def do_action(self, action):
         if isinstance(action, ActionAnte):
             self._do_forced_bet(action)
@@ -243,6 +243,11 @@ if __name__ == "__main__":
     ]
     game.do_action(ActionDealFlop(flop))
 
+    print(PokerTools.get_draw_probability(
+        game.state,
+        set([Card(5,4), Card(13,2)]),
+        6
+    ))
     print(game)
     pass
 
