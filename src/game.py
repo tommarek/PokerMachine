@@ -67,7 +67,7 @@ class GameState(PClass):
         ret += f"  Street: {self.street}\n"
         ret += f"  board: {self.board}\n"
         ret += f"  pot: {self.pot}\n"
-        ret += f"  deck: {len(self.revealed_cards)}/{len(self.deck)}\n"
+        ret += f"  deck: {len(self.revealed_cards)}/{len(self.deck)+len(self.revealed_cards)}\n"
         ret += f"  action: {self.action}\n"
         return ret
 
@@ -108,6 +108,14 @@ class PokerGame():
         for key, val in changes.items():
             new_state = new_state.set(key, val)
         self.state = new_state
+
+    def _reveal_cards(self, cards):
+        deck = self.state.deck
+        revealed_cards = self.state.revealed_cards
+        for card in cards:
+            deck = deck.remove(card)
+            revealed_cards = revealed_cards.add(card)
+        return deck, revealed_cards
 
     def is_street_finished(self):
         ret = True
@@ -173,7 +181,14 @@ class PokerGame():
 
 
     def _do_deal_flop(self, action):
-        self._update_state({"board": pset(action.cards), "street": Street.FLOP, "action": action})
+        deck, revealed_cards = self._reveal_cards(action.cards)
+        self._update_state({
+            "board": pset(action.cards),
+            "street": Street.FLOP,
+            "action": action,
+            "deck": deck,
+            "revealed_cards":revealed_cards,
+        })
 
     def do_deal_card(self, action):
         import ipdb; ipdb.set_trace()
@@ -243,11 +258,6 @@ if __name__ == "__main__":
     ]
     game.do_action(ActionDealFlop(flop))
 
-    print(PokerTools.get_draw_probability(
-        game.state,
-        set([Card(5,4), Card(13,2)]),
-        6
-    ))
     print(game)
     pass
 

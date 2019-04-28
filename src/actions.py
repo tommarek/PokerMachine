@@ -6,8 +6,7 @@ class PokerAction():
         ret = f"{self.__class__.__name__} {args}"
         return ret
 
-class NoAction(PokerAction):
-    __slots__ = []
+NoAction = PokerAction
 
 class ActionDealFlop(PokerAction):
     __slots__ = ['cards']
