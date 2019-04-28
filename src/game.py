@@ -14,14 +14,14 @@ from actions import (
     NoAction,
     PokerAction,
 )
-from card import Card
+from card import Card, UnknownCard
 from const import Street
 from player import Player
 from player_manager import PlayerManager
 from poker_tools import PokerTools
 
 class PlayerState():
-    def __init__(self, pid, stack, position=None, player=None):
+    def __init__(self, pid, stack, position=None, player=None, cards=None):
         self.pid = pid
         self.stack = stack
         self.position = position
@@ -31,7 +31,7 @@ class PlayerState():
         self.stats = self.load_stats(player)
 
     def __str__(self):
-        ret = f"PID: '{self.pid}' (Playing:{self.playing}) "
+        ret = f"PID: '{self.pid}' {'(playing)' if self.playing else '(folded)'} "
         ret += f"stack: {str(self.stack)} "
         ret += f"active_bet: {self.active_bet}"
         ret += "\n"
@@ -128,7 +128,7 @@ class PokerGame():
         Players need to be added in order - dealer, sb, bb, ...
         Attrs:
             player_info (dict): player info in current game
-                {"server:player_name": stack_val}
+                {"server:player_name": stack_val, 'cards': set}
 
         """
         players = pvector()
@@ -140,6 +140,7 @@ class PokerGame():
                     pid=player_info['pid'],
                     stack=player_info['stack'],
                     position=pos,
+                    cards=player_info['cards'],
                 )
             )
 
@@ -199,17 +200,17 @@ class PokerGame():
         self._update_state({"board": new_board, "action": action})
 
 
-    def _do_check(self, player):
-        pass
+    def _do_check(self, action):
+        self._update_state({"action":action})
 
-    def _do_fold(self, pid):
+    def _do_fold(self, action):
         players = self.state.players
         for i, player in enumerate(players):
-            if player.pid == pid:
+            if player.pid == action.pid:
                 player.playing = False
                 players = players.set(i, player)
                 break
-        self._update_state({"players": players, "action": ActionFold(pid)})
+        self._update_state({"players": players, "action": action})
 
 
     def do_action(self, action):
@@ -232,11 +233,11 @@ if __name__ == "__main__":
     pm = PlayerManager('db.sqlite3')
     game = PokerGame(pm)
     players = [
-        {'pid': 'ps:p1', 'stack': 1001},
-        {'pid': 'ps:p2', 'stack': 1002},
-        {'pid': 'ps:p3', 'stack': 1003},
-        {'pid': 'ps:p4', 'stack': 1004},
-        {'pid': 'ps:p5', 'stack': 1005},
+        {'pid': 'ps:p1', 'stack': 1001, 'cards': set([Card(2,3), Card(14,2)])},
+        {'pid': 'ps:p2', 'stack': 1002, 'cards': set([UnknownCard(), UnknownCard()])},
+        {'pid': 'ps:p3', 'stack': 1003, 'cards': set([UnknownCard(), UnknownCard()])},
+        {'pid': 'ps:p4', 'stack': 1004, 'cards': set([UnknownCard(), UnknownCard()])},
+        {'pid': 'ps:p5', 'stack': 1005, 'cards': set([UnknownCard(), UnknownCard()])},
     ]
     # PREFLOP
     game.add_players(players)
